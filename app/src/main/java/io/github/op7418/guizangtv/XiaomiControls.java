@@ -13,7 +13,7 @@ final class XiaomiControls {
     private XiaomiControls() { }
 
     static boolean enabled() {
-        return "MiTV-MTSU0".equals(Build.MODEL);
+        return "MiTV-MTSU0".equals(Build.MODEL) || "MiTV4-ANSM0".equals(Build.MODEL);
     }
 
     /** Observed on this firmware: source 23 = HDMI 1, source 24 = HDMI 2. */
@@ -76,28 +76,8 @@ final class XiaomiControls {
             case "com.xiaodianshi.tv.yst": return "哔哩哔哩";
             case "com.xiaomi.mitv.smartshare": return "小米投屏";
             case "com.mitv.gallery": return "相册";
-            case "com.mitv.tvhome": return "小米原桌面";
             default: return original;
         }
     }
 
-    static boolean startStockHome(Context context, ComponentName component) {
-        if (!enabled() || !"com.mitv.tvhome".equals(component.getPackageName())) return false;
-        // The public MAIN alias is exported without HOME_STATE. The directly enumerated
-        // MainActivityUserMode target requires Xiaomi's signature permission on this firmware.
-        ComponentName alias = new ComponentName("com.mitv.tvhome", "com.mitv.tvhome.MainActivity");
-        try {
-            ActivityInfo info = context.getPackageManager().getActivityInfo(alias, 0);
-            if (!info.enabled || !info.exported) return false;
-            if (info.permission != null
-                    && context.checkSelfPermission(info.permission) != PackageManager.PERMISSION_GRANTED)
-                return false;
-            context.startActivity(new Intent(Intent.ACTION_MAIN).setComponent(alias)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
-            return true;
-        } catch (PackageManager.NameNotFoundException | RuntimeException unavailable) {
-            android.util.Log.w("TvHome.Xiaomi", "Public Xiaomi Home entry unavailable", unavailable);
-            return false;
-        }
-    }
 }

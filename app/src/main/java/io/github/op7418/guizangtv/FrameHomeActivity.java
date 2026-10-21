@@ -2,7 +2,6 @@ package io.github.op7418.guizangtv;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
@@ -22,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -52,7 +52,7 @@ public final class FrameHomeActivity extends Activity {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        selected = Math.max(0, Math.min(5, getSharedPreferences(PREFS, MODE_PRIVATE).getInt("selected", 0)));
+        selected = Math.max(0, Math.min(2, getSharedPreferences(PREFS, MODE_PRIVATE).getInt("selected", 0)));
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
         ImageView photo = new ImageView(this);
@@ -74,12 +74,9 @@ public final class FrameHomeActivity extends Activity {
         FrameLayout.LayoutParams listParams = new FrameLayout.LayoutParams(dp(590), -2, Gravity.START | Gravity.CENTER_VERTICAL);
         listParams.leftMargin = dp(64);
         root.addView(list, listParams);
-        addRow(list, "PlayStation 5", "HDMI 2", () -> hdmi(2));
-        addRow(list, "Apple TV", "HDMI 1", () -> hdmi(1));
+        addRow(list, "Apple TV", "HDMI 2", () -> hdmi(2));
         addRow(list, "哔哩哔哩", null, () -> openPackage("com.xiaodianshi.tv.yst"));
         addRow(list, "小米投屏", null, () -> openPackage("com.xiaomi.mitv.smartshare"));
-        addRow(list, "相册", null, () -> openPackage("com.mitv.gallery"));
-        addRow(list, "小米原桌面", null, this::stockHome);
 
         clock = text("", 26);
         clock.setGravity(Gravity.END);
@@ -184,13 +181,7 @@ public final class FrameHomeActivity extends Activity {
         if (!XiaomiControls.openHdmi(this, port)) message("暂时无法切换 HDMI " + port + "，可使用其他信号源");
     }
 
-    private void stockHome() {
-        if (!XiaomiControls.startStockHome(this, new ComponentName("com.mitv.tvhome", "com.mitv.tvhome.MainActivity")))
-            message("暂时无法打开小米原桌面");
-    }
-
     private void openPackage(String pkg) {
-        if ("com.mitv.tvhome".equals(pkg)) { stockHome(); return; }
         Intent intent = getPackageManager().getLeanbackLaunchIntentForPackage(pkg);
         if (intent == null) intent = getPackageManager().getLaunchIntentForPackage(pkg);
         launch(intent, "应用暂时不可用");
@@ -213,7 +204,7 @@ public final class FrameHomeActivity extends Activity {
         }
         List<String> packages = new ArrayList<>(apps.keySet());
         Collator collator = Collator.getInstance(Locale.CHINA);
-        packages.sort((a, b) -> collator.compare(apps.get(a), apps.get(b)));
+        Collections.sort(packages, (a, b) -> collator.compare(apps.get(a), apps.get(b)));
         String[] names = new String[packages.size()];
         for (int i = 0; i < names.length; i++) names[i] = apps.get(packages.get(i));
         library = new AlertDialog.Builder(this).setTitle("全部应用")
@@ -250,8 +241,6 @@ public final class FrameHomeActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (!rows.isEmpty() && controls.contains(getCurrentFocus())) rows.get(selected).requestFocus();
-        else if (XiaomiControls.enabled()) stockHome();
-        else super.onBackPressed();
     }
 
     @Override public void dump(String prefix, java.io.FileDescriptor fd, java.io.PrintWriter writer, String[] args) {
